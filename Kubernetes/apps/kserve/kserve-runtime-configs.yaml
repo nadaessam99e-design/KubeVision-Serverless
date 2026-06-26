@@ -18,7 +18,7 @@ spec:
         kserve:
           servingruntime:
             enabled: true
-            # ✨ تفعيل محرك MLflow الرسمي ✨
+        
             mlflowserver:
               enabled: true
               resources:
