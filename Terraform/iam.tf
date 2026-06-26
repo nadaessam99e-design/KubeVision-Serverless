@@ -34,8 +34,8 @@ resource "kubernetes_service_account" "s3_sa" {
 
 resource "aws_eks_pod_identity_association" "app_s3_association" {
   cluster_name    = module.eks.cluster_name
-  namespace       = kubernetes_service_account.s3_sa.metadata[0].namespace
-  service_account = kubernetes_service_account.s3_sa.metadata[0].name
+  namespace       = "default"
+  service_account = "default"
   role_arn        = aws_iam_role.pod_s3_role.arn
   depends_on = [
     aws_iam_role_policy_attachment.s3_full_access,
