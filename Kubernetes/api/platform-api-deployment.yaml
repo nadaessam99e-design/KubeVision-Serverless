@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-api
+  namespace: platform-apps
+  labels:
+    app: platform-api
+spec:
+  selector:
+    matchLabels:
+      app: platform-api
+  template:
+    metadata:
+      labels:
+        app: platform-api
+    spec:
+      serviceAccountName: api-sa
+      containers:
+        - name: platform-api
+          image: 439328746854.dkr.ecr.us-east-1.amazonaws.com/platform-api:3b0b1322910d44237d719f09e85a703705c87f03
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080 
+              name: http
+          resources:
+            requests:
+              cpu: "200m" 
+              memory: "512Mi"

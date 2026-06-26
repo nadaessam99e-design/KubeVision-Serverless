@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kserve-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "12" 
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/kserve/kserve.git'
+    targetRevision: v0.18.0
+    path: charts/kserve-resources
+    helm:
+      values: |
+        kserve:
+          controller:
+            deploymentMode: "Knative"
+            gateway:
+              domain: "creative.opik.net"
+              domainTemplate: "{{ .Name }}.{{ .IngressDomain }}"
+              urlScheme: "https"
+              ingressGateway:
+                className: "istio"
+                gateway: "istio-system/kubevision-gateway"
+              localGateway:
+                gateway: "knative-serving/knative-local-gateway"
+                gatewayService: "knative-local-gateway.istio-system.svc.cluster.local"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kserve
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

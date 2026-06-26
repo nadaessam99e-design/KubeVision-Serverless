@@ -1,0 +1,44 @@
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: arc-runner
+#   namespace: argocd
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "6" 
+#   finalizers:
+#     - resources-finalizer.argocd.argoproj.io
+# spec:
+#   project: default
+#   source:
+#     repoURL: ghcr.io/actions/actions-runner-controller-charts
+#     chart: gha-runner-scale-set
+#     targetRevision: 0.14.2
+#     helm:
+#       values: |
+#         runnerScaleSetName: "platform-runner"
+#         githubConfigUrl: "https://github.com/AdhamAyad/KubeVision-Serverless-Platform"
+#         githubConfigSecret: "github-runner-token"
+#         controllerServiceAccount:
+#           namespace: "actions-runner-system"
+#           name: "arc-controller-gha-rs-controller"
+#         template:
+#           spec:
+#             securityContext:
+#               fsGroup: 1001
+#         containerMode:
+#           type: "kubernetes"
+#           kubernetesModeWorkVolumeClaim:
+#             accessModes: ["ReadWriteOnce"]
+#             storageClassName: "gp2" 
+#             resources:
+#               requests:
+#                 storage: 2Gi
+#         # containerMode:
+#         #   type: "dind"
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: actions-runner-system
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true

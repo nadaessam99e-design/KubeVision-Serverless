@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - istio.yaml
+
+patches:
+  - target:
+      kind: Service
+      name: istio-ingressgateway
+      namespace: istio-system
+    patch: |-
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: istio-ingressgateway
+        namespace: istio-system
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-type: "external"
+          service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+          service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"

@@ -1,0 +1,4 @@
+---
+# defaults file for roles/argocd
+argocd_namespace: argocd
+argocd_service_type: ClusterIP

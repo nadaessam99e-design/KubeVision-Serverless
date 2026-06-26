@@ -1,0 +1,43 @@
+---
+# tasks file for roles/argocd
+- name: Apply Gateway API Standard CRDs
+  ansible.builtin.command: kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+  register: gateway_api_result
+  changed_when: "'created' in gateway_api_result.stdout or 'configured' in gateway_api_result.stdout"
+  
+- name: Install Kubernetes Metrics Server
+  ansible.builtin.command: kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+  register: metrics_server_result
+  changed_when: "'created' in metrics_server_result.stdout or 'configured' in metrics_server_result.stdout"
+
+- name: Add ArgoCD Helm repository
+  kubernetes.core.helm_repository:
+    name: argo
+    repo_url: "https://argoproj.github.io/argo-helm"
+
+- name: Install ArgoCD via Helm
+  kubernetes.core.helm:
+    name: argocd
+    chart_ref: argo/argo-cd
+    release_namespace: "{{ argocd_namespace }}"
+    create_namespace: yes
+    wait: yes 
+    values:
+      server:
+        extraArgs:
+          - --insecure
+        service:
+          type: "{{ argocd_service_type }}"
+
+- name: Get ArgoCD admin password
+  ansible.builtin.command: >
+    kubectl get secret argocd-initial-admin-secret 
+    -n {{ argocd_namespace }} 
+    -o jsonpath="{.data.password}"
+  register: argo_secret_raw
+  changed_when: false
+
+- name: Print ArgoCD Credentials
+  debug:
+    msg: 
+      - "Admin Password is: {{ argo_secret_raw.stdout | b64decode }}"

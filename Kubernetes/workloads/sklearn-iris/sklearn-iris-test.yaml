@@ -1,0 +1,23 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: model
+  namespace: default
+  annotations:
+    serving.kserve.io/ingress-class: "istio"
+spec:
+  predictor:
+    runtime: kserve-sklearn
+    model:
+      name: ""
+      modelFormat:
+        name: sklearn
+        version: "1"
+      storageUri: "gs://kfserving-examples/models/sklearn/1.0/model"
+      resources:
+        limits:
+          cpu: "500m"
+          memory: 1Gi
+        requests:
+          cpu: "100m"
+          memory: 500Mi

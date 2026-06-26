@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kserve-runtime-configs
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "11" 
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/kserve/kserve.git'
+    targetRevision: v0.18.0
+    path: charts/kserve-runtime-configs
+    helm:
+      values: |
+        kserve:
+          servingruntime:
+            enabled: true
+            # sklearnserver:
+            #   resources:
+            #     requests:
+            #       cpu: "100m"
+            #       memory: "256Mi"
+            #     limits:
+            #       cpu: "500m"
+            #       memory: "512Mi"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kserve
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,51 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - serving-core.yaml
+  - net-gateway-api.yaml
+
+#! All patches inside seving-core.yaml except config-gateway
+patches:
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: config-domain
+        namespace: knative-serving
+      data:
+        creative.opik.net: ""
+
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: config-network
+        namespace: knative-serving
+      data:
+        ingress-class: "gateway-api.ingress.networking.knative.dev"
+        default-external-scheme: "https"
+        domain-template: "{{.Name}}.{{.Domain}}"
+        
+  #! this inside net-gateway-api.yaml
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: config-gateway
+        namespace: knative-serving
+      data:
+        external-gateways: '[{"class": "istio", "gateway": "kubevision-ingress/kubevision-gateway"}]'
+        local-gateways: '[{"class": "istio", "gateway": "kubevision-ingress/internal-gateway"}]'
+
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: config-gc
+        namespace: knative-serving
+      data:
+        retain-since-create-time: "48h"
+        retain-since-last-active-time: "15h"
+        min-non-active-revisions: "2"
+        max-non-active-revisions: "5"

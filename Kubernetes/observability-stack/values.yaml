@@ -1,0 +1,77 @@
+#? MINIO CONFIGURATION (For Tempo Traces)
+minio:
+  enabled: true
+  mode: standalone
+  replicas: 1
+
+  #TODO: move these to sealed secrets
+  existingSecret: "minio-auth-secret"
+
+  buckets:
+    - name: platform-tempo-traces
+      policy: none  
+      purge: false
+
+  users:
+    - accessKey: "tempo-user"
+      existingSecret: "minio-auth-secret"
+      existingSecretKey: "tempoPassword"
+      policy: "readwrite"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+  persistence:
+    enabled: true
+    storageClass: "gp2"
+    size: 10Gi
+    accessMode: ReadWriteOnce
+
+#? Tempo Configuration
+tempo:
+  enabled: true
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  service:
+    annotations:
+      argocd.argoproj.io/sync-wave: "2"
+
+  extraEnv:
+    - name: AWS_ACCESS_KEY_ID
+      value: "tempo-user"
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: minio-auth-secret
+          key: tempoPassword
+
+  persistence:
+    enabled: false
+  metricsGenerator:
+    enabled: false
+
+  storage:
+    trace:
+      backend: s3   
+      s3:           
+        bucket: platform-tempo-traces
+        endpoint: observability-stack-app-minio.observability.svc.cluster.local:9000
+        insecure: true
+        forcepathstyle: true #? MinIO requires path-style access
+        access_key: "${AWS_ACCESS_KEY_ID}"
+        secret_key: "${AWS_SECRET_ACCESS_KEY}" 
+
+#! DISABLE OTHER STACKS TEMPORARILY
+prometheus:
+  enabled: false
+loki:
+  enabled: false
+alloy:
+  enabled: false
+grafana:
+  enabled: false

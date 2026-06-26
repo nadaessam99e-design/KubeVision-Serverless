@@ -1,0 +1,96 @@
+name: Platform API CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'platform-api/**'
+
+env:
+  IMAGE_NAME: platform-api
+  AWS_REGION: us-east-1
+
+jobs:
+  build-test-deploy:
+
+    runs-on: platform-runner
+
+    container:
+      image: maven:3.9-eclipse-temurin-21
+
+    permissions:
+      contents: write
+
+    defaults:
+      run:
+        working-directory: ./platform-api
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build and analyze with SonarCloud
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          chmod +x mvnw
+          ./mvnw -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=AdhamAyad_KubeVision-Serverless-Platform \
+            -DskipTests
+            # -Dsonar.qualitygate.wait=true
+
+      - name: Build Image with Kaniko (No Push)
+        uses: docker://gcr.io/kaniko-project/executor:debug
+        with:
+          args: >-
+            --context=platform-api
+            --dockerfile=platform-api/Dockerfile
+            --no-push
+            --destination=${{ vars.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            --tar-path=image.tar
+
+      - name: Trivy Image Scan (Local Tarball)
+        uses: aquasecurity/trivy-action@master
+        with:
+          input: image.tar
+          format: table
+          exit-code: 0
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          cache-dir: /tmp/trivy-cache
+
+      - name: Push Image to ECR using Crane
+        working-directory: .
+        run: |
+          apt-get update -y && apt-get install -y unzip curl
+          curl -sL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
+          unzip -q awscliv2.zip
+          ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+          curl -sL "https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_x86_64.tar.gz" | tar -xz crane
+          chmod +x crane          
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} \
+            | ./crane auth login ${{ vars.ECR_REGISTRY }} -u AWS --password-stdin          
+          ./crane push image.tar \
+            ${{ vars.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Update ArgoCD Manifests
+        working-directory: .
+        run: |       
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git clean-repo
+          cd clean-repo
+          sed -i "s|image: .*|image: ${{ vars.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" Kubernetes/api/platform-api-deployment.yaml
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add Kubernetes/api/platform-api-deployment.yaml
+          git commit -m "Auto update image tag to ${{ vars.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          git push origin main

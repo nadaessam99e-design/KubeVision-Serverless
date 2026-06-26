@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubevision-certificates-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4" 
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/AdhamAyad/KubeVision-Serverless-Platform.git'
+    targetRevision: main
+    path: Kubernetes/certificate
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: kubevision-ingress
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

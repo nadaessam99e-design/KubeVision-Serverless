@@ -1,0 +1,54 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: kubevision-gateway
+  namespace: kubevision-ingress
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    
+spec:
+  gatewayClassName: istio
+  listeners:
+  
+  - name: http-main
+    protocol: HTTP
+    port: 80
+    hostname: "creative.opik.net"
+    allowedRoutes:
+      namespaces:
+        from: Same
+
+  - name: http-wildcard
+    protocol: HTTP
+    port: 80
+    hostname: "*.creative.opik.net"
+    allowedRoutes:
+      namespaces:
+        from: Same
+
+#TODO: Don't forget to add Certificate inside kubevision-ingress namesace
+  - name: https-main
+    protocol: HTTPS
+    port: 443
+    hostname: "creative.opik.net"
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - name: creative-tls-secret
+    allowedRoutes:
+      namespaces:
+        from: All
+
+  - name: https-wildcard
+    protocol: HTTPS
+    port: 443
+    hostname: "*.creative.opik.net"
+    tls:
+      mode: Terminate
+      certificateRefs:
+        - name: creative-tls-secret
+    allowedRoutes:
+      namespaces:
+        from: All
