@@ -11,7 +11,7 @@ spec:
       modelFormat:
         name: mlflow
       runtime: kserve-mlserver 
-      storageUri: "iris-models-114223852322-us-east-1-an/mlartifacts/models/m-1dc13068ce3a4a63abaf51848a461df9/artifacts/"
+      storageUri: "s3://iris-models-114223852322-us-east-1-an/mlartifacts/models/m-1dc13068ce3a4a63abaf51848a461df9/artifacts/"
       resources:
         limits:
           cpu: "500m"
