@@ -10,6 +10,7 @@ spec:
     model:
       modelFormat:
         name: mlflow
+      runtime: kserve-mlserver 
       storageUri: "s3://iris-models-114223852322-us-east-1-an/mlartifacts/models/m-06ccb2dbb0034be8b3f86500e13e61e7/artifacts/"
       resources:
         limits:
