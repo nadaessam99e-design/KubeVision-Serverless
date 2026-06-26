@@ -36,6 +36,7 @@ jobs:
         run: |
           echo "Repository=${{ github.repository }}"
           echo "Ref=${{ github.ref }}"
+          echo "Actor=${{ github.actor }}"
           echo "Event=${{ github.event_name }}"
 
       - name: Configure AWS Credentials using OIDC
@@ -74,6 +75,7 @@ jobs:
       - name: Install Ansible and K8s dependencies
         if: steps.filter.outputs.ansible == 'true' || steps.filter.outputs.terraform == 'true' || github.event_name == 'workflow_dispatch'
         run: |
+          python -m pip install --upgrade pip
           pip install ansible kubernetes pyyaml
           ansible-galaxy collection install kubernetes.core
 
