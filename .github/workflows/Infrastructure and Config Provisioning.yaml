@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - 'Terraform/**'  
+      - 'Terraform/**'
       - 'Ansible/**'
 
 permissions:
@@ -14,10 +14,10 @@ permissions:
   contents: read
 
 jobs:
-  deploy: 
+  deploy:
     name: "Deploy Infrastructure and Apps"
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -32,17 +32,23 @@ jobs:
             ansible:
               - 'Ansible/**'
 
-      - name: Configure AWS Credentials using OIDC  
+      - name: Print GitHub Context
+        run: |
+          echo "Repository=${{ github.repository }}"
+          echo "Ref=${{ github.ref }}"
+          echo "Event=${{ github.event_name }}"
+
+      - name: Configure AWS Credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::114223852322:role/nada
-          aws-region: us-east-1 
-      
+          aws-region: us-east-1
+
       - name: Setup Terraform
         if: steps.filter.outputs.terraform == 'true' || github.event_name == 'workflow_dispatch'
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.15.2" 
+          terraform_version: "1.15.2"
 
       - name: Terraform Init
         if: steps.filter.outputs.terraform == 'true' || github.event_name == 'workflow_dispatch'
@@ -73,7 +79,7 @@ jobs:
 
       - name: Run Ansible Playbook to Install ArgoCD
         if: steps.filter.outputs.ansible == 'true' || steps.filter.outputs.terraform == 'true' || github.event_name == 'workflow_dispatch'
-        working-directory: ./Ansible 
+        working-directory: ./Ansible
         run: ansible-playbook setup-cluster.yaml
 
       - name: Deploy Master App (App-of-Apps)
