@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/AdhamAyad/KubeVision-Serverless-Platform.git'
+    repoURL: 'https://github.com/nadaessam99e-design/KubeVision-Serverless.git'
     targetRevision: main
     path: Kubernetes/apps  
     directory:
