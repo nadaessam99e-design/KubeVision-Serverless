@@ -7,13 +7,10 @@ metadata:
     serving.kserve.io/ingress-class: "istio"
 spec:
   predictor:
-    runtime: kserve-sklearn
     model:
-      name: ""
       modelFormat:
-        name: sklearn
-        version: "1"
-      storageUri: "gs://kfserving-examples/models/sklearn/1.0/model"
+        name: mlflow
+      storageUri: "s3://iris-models-114223852322-us-east-1-an/mlartifacts/models/m-06ccb2dbb0034be8b3f86500e13e61e7/artifacts/"
       resources:
         limits:
           cpu: "500m"
