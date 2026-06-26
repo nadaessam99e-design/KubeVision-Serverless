@@ -32,7 +32,7 @@ jobs:
             ansible:
               - 'Ansible/**'
 
-      - name: Configure AWS Credentials using OIDC
+      - name: Configure AWS Credentials using OIDC  
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::439328746854:role/terraform
